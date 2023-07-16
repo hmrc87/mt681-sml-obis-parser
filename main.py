@@ -1,9 +1,11 @@
 import datetime
 import serial
 from smllib import SmlStreamReader
-from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+from prometheus_client import CollectorRegistry,Counter, Gauge, push_to_gateway
+import argparse
 
-def parse(): 
+
+def parse(skip_prometheus): 
     obis_arr = {
         '0100000000FF': ['1-0:0.0.0*255', 'Seriennummer'],
         '0100010700FF': ['1-0:1.7.0*255', 'Momentane Wirkleistung Bezug'],
@@ -51,12 +53,16 @@ def parse():
             data = [(timestamp, obis_arr[obisvalue.obis][1], obisvalue.obis, obisvalue.value) for obisvalue in obis_values]
             print (data)
             framereceived = True
-            insert_data(data)
+            
+            if not skip_prometheus:
+                insert_data(data)
  
             
 def insert_data(data):
 
     registry = CollectorRegistry()
+
+# Aktuelle Wirkleistung
     g = Gauge('mt681_current_power', 'aktuelle Wirkleistung', registry=registry)
     
     values = [item[3] for item in data if item[1] == 'aktuelle Wirkleistung']
@@ -67,5 +73,23 @@ def insert_data(data):
         push_to_gateway('localhost:9091', job='mt681', registry=registry)
         print("pushed to prometheus")
 
+# Zählerstand Total
+    c = Counter('mt681_meter_reading_total', 'Zählerstand total', registry=registry)
+
+    values = [item[3] for item in data if item[1] == 'Zählerstand Total']
+    value = values[0] if values else None
+
+    if value is not None:
+        c._value.set(value)
+        push_to_gateway('localhost:9091', job='mt681', registry=registry)
+        print("pushed to prometheus")
+
+    
+    
+
 if __name__ == "__main__":
-    parse()
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("--skip_prometheus", help="skip pushing to Prometheus", action="store_true")
+    args = parser.parse_args()
+    
+    parse(args.skip_prometheus)
