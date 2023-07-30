@@ -4,3 +4,8 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets: ['pushgateway:9091']
+  - job_name: 'ahoy-dtu'
+    honor_labels: true
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['ahoy-dtu.fritz.box']
