@@ -3,7 +3,7 @@ import serial
 from smllib import SmlStreamReader
 from prometheus_client import CollectorRegistry,Counter, Gauge, push_to_gateway
 import argparse
-
+from rich import print
 
 def parse(skip_prometheus): 
     obis_arr = {
@@ -35,17 +35,19 @@ def parse(skip_prometheus):
         bytesize=serial.EIGHTBITS
     )
     
-    
+    print(ser.name)
+
     # Open the connection
     ser.isOpen()
     
     stream = SmlStreamReader()
     framereceived = False
     while framereceived == False:
-        byte = ser.read()
+        byte = ser.read(20)
         stream.add(byte)
+        # print the byte converted to hex
+        print(byte.hex())
         sml_frame = stream.get_frame()
-        
 
         if sml_frame is not None:
             obis_values = sml_frame.get_obis()
