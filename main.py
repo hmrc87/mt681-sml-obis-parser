@@ -71,7 +71,7 @@ def insert_data(data):
     value = values[0] if values else None
     
     if value is not None:
-	    print("Aktuelle WIrkleistung mt681_current_power: {value}"+ value))
+        print("Aktuelle WIrkleistung mt681_current_power:"+ value)
         g.set(value)
         push_to_gateway('localhost:9091', job='mt681', registry=registry)
         print("pushed to prometheus")
